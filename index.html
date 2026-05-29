@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学科筋トレ部</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>数学科筋トレ部</h1>
+            <p class="subtitle">数学を愛し、筋肉を愛する者の集い</p>
+        </header>
+
+        <!-- タブナビゲーション -->
+        <nav class="tabs">
+            <button class="tab-button active" onclick="switchTab('activity')">活動紹介</button>
+            <button class="tab-button" onclick="switchTab('goals')">目標と実績</button>
+            <button class="tab-button" onclick="switchTab('diary')">活動日記</button>
+        </nav>
+
+        <main>
+            <!-- タブ1: 活動紹介 -->
+            <div id="activity" class="tab-content active">
+                <section>
+                    <h2>活動内容</h2>
+                    <ul>
+                        <li><strong>活動日：</strong>水曜日, 金曜日 3限</li>
+                        <li><strong>場所：</strong>第2体育館トレーニング室</li>
+                        <li><strong>内容：</strong>ベンチプレスやスクワットなどをみんなでやっています！</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>部員の紹介</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>名前 (役職)</th>
+                                    <th>得意な種目</th>
+                                    <th>リンク</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-list">
+                                <tr class="loading">
+                                    <td colspan="3">読み込み中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- タブ2: 目標と実績 -->
+            <div id="goals" class="tab-content">
+                <section>
+                    <h2>目標</h2>
+                    <h3>今年の目標</h3>
+                    <ul id="yearly-goals-list">
+                        <li class="loading">読み込み中...</li>
+                    </ul>
+
+                    <h3 id="current-goals-header">今月の目標</h3>
+                    <ul id="current-goals-list">
+                        <li class="loading">読み込み中...</li>
+                    </ul>
+
+                    <h3>過去の目標と達成状況</h3>
+                    <div id="past-goals-container">
+                        <p class="loading">読み込み中...</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2>これまでの実績</h2>
+                    <ul id="achievements-list">
+                        <li class="loading">読み込み中...</li>
+                    </ul>
+                </section>
+            </div>
+
+            <!-- タブ3: 活動日記 -->
+            <div id="diary" class="tab-content">
+                <section>
+                    <h2>活動日記</h2>
+                    <div id="diary-list" class="diary-list">
+                        <p class="loading">読み込み中...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 数学科筋トレ部</p>
+        </footer>
+    </div>
+
+    <!-- タブ切り替え用のスクリプト -->
+    <script>
+        function switchTab(tabId) {
+            // 全てのタブコンテンツからactiveを取り除く
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 全てのタブボタンからactiveを取り除く
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // 対象のタブコンテンツとボタンをactiveにする
+            const targetContent = document.getElementById(tabId);
+            targetContent.classList.add('active');
+
+            // クリックされたボタンを特定してactiveにする
+            const clickedButton = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes(tabId));
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+        }
+
+        // ページ読み込み時にデータをロード
+        document.addEventListener("DOMContentLoaded", () => {
+            loadData();
+        });
+
+        async function loadData() {
+            try {
+                const [membersRes, goalsRes, diaryRes] = await Promise.all([
+                    fetch('members.json'),
+                    fetch('goals.json'),
+                    fetch('diary.json')
+                ]);
+
+                if (!membersRes.ok || !goalsRes.ok || !diaryRes.ok) {
+                    throw new Error('データの読み込みに失敗しました');
+                }
+
+                const [members, goals, diary] = await Promise.all([
+                    membersRes.json(),
+                    goalsRes.json(),
+                    diaryRes.json()
+                ]);
+
+                renderMembers(members);
+                renderYearlyGoals(goals.yearlyGoals);
+                renderMonthlyGoals(goals.monthlyGoals);
+                renderAchievements(goals.achievements);
+                renderDiary(diary);
+
+            } catch (error) {
+                console.error(error);
+                showErrorMessages();
+            }
+        }
+
+        function renderMembers(members) {
+            const tbody = document.getElementById('members-list');
+            tbody.innerHTML = '';
+            if (!members || members.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="no-data">登録されている部員はいません。</td></tr>';
+                return;
+            }
+            members.forEach(m => {
+                const tr = document.createElement('tr');
+
+                const nameTd = document.createElement('td');
+                nameTd.textContent = m.role ? `${m.name} (${m.role})` : m.name;
+
+                const specialtyTd = document.createElement('td');
+                specialtyTd.textContent = m.specialty || '-';
+
+                const linkTd = document.createElement('td');
+                if (m.url) {
+                    const a = document.createElement('a');
+                    a.href = m.url;
+                    a.target = '_blank';
+                    a.textContent = 'リンク';
+                    linkTd.appendChild(a);
+                } else {
+                    linkTd.textContent = 'なし';
+                }
+
+                tr.appendChild(nameTd);
+                tr.appendChild(specialtyTd);
+                tr.appendChild(linkTd);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderYearlyGoals(goals) {
+            const list = document.getElementById('yearly-goals-list');
+            list.innerHTML = '';
+            if (!goals || goals.length === 0) {
+                list.innerHTML = '<li>目標はありません。</li>';
+                return;
+            }
+            goals.forEach(goal => {
+                const li = document.createElement('li');
+                li.textContent = goal;
+                list.appendChild(li);
+            });
+        }
+
+        function renderMonthlyGoals(monthlyGoals) {
+            const currentList = document.getElementById('current-goals-list');
+            const pastContainer = document.getElementById('past-goals-container');
+            const currentHeader = document.getElementById('current-goals-header');
+
+            currentList.innerHTML = '';
+            pastContainer.innerHTML = '';
+
+            if (!monthlyGoals || monthlyGoals.length === 0) {
+                currentList.innerHTML = '<li>今月の目標はありません。</li>';
+                pastContainer.innerHTML = '<p class="no-data">過去の目標履歴はありません。</p>';
+                return;
+            }
+
+            // 配列の最後の要素を「今月の最新目標」とする
+            const latestGoalIndex = monthlyGoals.length - 1;
+            const latestGoal = monthlyGoals[latestGoalIndex];
+
+            // 今月の目標を描画
+            if (latestGoal) {
+                currentHeader.textContent = `今月の目標（${latestGoal.period}）`;
+
+                latestGoal.items.forEach(item => {
+                    const li = document.createElement('li');
+
+                    const textSpan = document.createElement('span');
+                    textSpan.innerHTML = `<strong>${escapeHTML(item.text)}</strong>`;
+                    li.appendChild(textSpan);
+
+                    if (item.status && item.status !== 'pending') {
+                        const badge = createBadge(item.status);
+                        li.appendChild(badge);
+                    }
+                    currentList.appendChild(li);
+                });
+            }
+
+            // 過去の目標を描画 (最新の目標以外の過去データを降順で表示)
+            const pastGoals = monthlyGoals.slice(0, latestGoalIndex).reverse();
+            if (pastGoals.length === 0) {
+                pastContainer.innerHTML = '<p class="no-data">過去の目標履歴はありません。</p>';
+                return;
+            }
+
+            pastGoals.forEach(month => {
+                const monthSec = document.createElement('div');
+                monthSec.className = 'past-month-section';
+
+                const h4 = document.createElement('h4');
+                h4.className = 'past-month-title';
+                h4.textContent = month.period;
+                monthSec.appendChild(h4);
+
+                const ul = document.createElement('ul');
+                month.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'past-goal-item';
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = item.text;
+                    li.appendChild(textSpan);
+
+                    const badge = createBadge(item.status);
+                    li.appendChild(badge);
+                    ul.appendChild(li);
+                });
+                monthSec.appendChild(ul);
+                pastContainer.appendChild(monthSec);
+            });
+        }
+
+        function createBadge(status) {
+            const span = document.createElement('span');
+            span.className = `badge badge-${status}`;
+            if (status === 'achieved') {
+                span.textContent = '達成';
+            } else if (status === 'failed') {
+                span.textContent = '未達成';
+            } else {
+                span.textContent = '進行中';
+            }
+            return span;
+        }
+
+        function renderAchievements(achievements) {
+            const list = document.getElementById('achievements-list');
+            list.innerHTML = '';
+            if (!achievements || achievements.length === 0) {
+                list.innerHTML = '<li>実績はありません。</li>';
+                return;
+            }
+            achievements.forEach(ach => {
+                const li = document.createElement('li');
+                li.textContent = ach;
+                list.appendChild(li);
+            });
+        }
+
+        function renderDiary(diary) {
+            const container = document.getElementById('diary-list');
+            container.innerHTML = '';
+            if (!diary || diary.length === 0) {
+                container.innerHTML = '<p class="no-data">日記はありません。</p>';
+                return;
+            }
+
+            diary.forEach(post => {
+                const article = document.createElement('article');
+                article.className = 'diary-post';
+
+                const authorHTML = post.author ? `<span class="diary-post-author">by ${escapeHTML(post.author)}</span>` : '';
+
+                article.innerHTML = `
+                    <header class="diary-post-header">
+                        <div class="diary-post-meta">
+                            <time datetime="${post.date}">${formatDate(post.date, post.dayOfWeek)}</time>
+                            ${authorHTML}
+                        </div>
+                        <h3 class="diary-post-title">${escapeHTML(post.title)}</h3>
+                    </header>
+                    <p class="diary-post-content">${escapeHTML(post.content).replace(/\n/g, '<br>')}</p>
+                `;
+                container.appendChild(article);
+            });
+        }
+
+        function formatDate(dateStr, dayOfWeek) {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${year}年${month}月${day}日 (${dayOfWeek})`;
+        }
+
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showErrorMessages() {
+            const listIds = ['yearly-goals-list', 'current-goals-list', 'achievements-list'];
+            listIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<li class="error">データの読み込みに失敗しました。</li>';
+            });
+            const containers = ['past-goals-container', 'diary-list'];
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<p class="error">データの読み込みに失敗しました。</p>';
+            });
+
+            const membersList = document.getElementById('members-list');
+            if (membersList) {
+                membersList.innerHTML = '<tr><td colspan="3" class="error">データの読み込みに失敗しました。</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>

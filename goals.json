@@ -1,0 +1,24 @@
+{
+  "yearlyGoals": [
+    "部員の平均ベンチプレス記録を60kgにする！",
+    "サボらずやる"
+  ],
+  "monthlyGoals": [
+    {
+      "period": "2026年6月",
+      "items": [
+        {
+          "text": "懸垂広めで5回できるようにする",
+          "status": "pending"
+        },
+        {
+          "text": "週2回の活動出席率を100%にする",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "achievements": [
+    "ノボロック初段クリア!"
+  ]
+}
