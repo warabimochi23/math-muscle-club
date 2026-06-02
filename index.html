@@ -18,6 +18,7 @@
         <!-- タブナビゲーション -->
         <nav class="tabs">
             <button class="tab-button active" onclick="switchTab('activity')">活動紹介</button>
+            <button class="tab-button" onclick="switchTab('schedule')">活動予定</button>
             <button class="tab-button" onclick="switchTab('goals')">目標と実績</button>
             <button class="tab-button" onclick="switchTab('diary')">活動日記</button>
         </nav>
@@ -51,6 +52,36 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- タブ: 活動予定 -->
+            <div id="schedule" class="tab-content">
+                <section>
+                    <h2>活動予定</h2>
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="calendar-btn" onclick="prevMonth()">&lt;</button>
+                            <h3 id="calendar-title">-年-月</h3>
+                            <button class="calendar-btn" onclick="nextMonth()">&gt;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>日</div>
+                            <div>月</div>
+                            <div>火</div>
+                            <div>水</div>
+                            <div>木</div>
+                            <div>金</div>
+                            <div>土</div>
+                        </div>
+                        <div id="calendar-days" class="calendar-days">
+                            <!-- JSで日付を生成 -->
+                        </div>
+                    </div>
+                    
+                    <div id="event-detail-container" class="event-detail-container">
+                        <!-- 選択した日付の予定詳細をここに表示 -->
                     </div>
                 </section>
             </div>
@@ -125,34 +156,45 @@
             }
         }
 
+        let schedules = [];
+        let currentYear, currentMonth;
+
         // ページ読み込み時にデータをロード
         document.addEventListener("DOMContentLoaded", () => {
+            const today = new Date();
+            currentYear = today.getFullYear();
+            currentMonth = today.getMonth();
             loadData();
         });
 
         async function loadData() {
             try {
-                const [membersRes, goalsRes, diaryRes] = await Promise.all([
+                const [membersRes, goalsRes, diaryRes, scheduleRes] = await Promise.all([
                     fetch('members.json'),
                     fetch('goals.json'),
-                    fetch('diary.json')
+                    fetch('diary.json'),
+                    fetch('schedule.json')
                 ]);
 
-                if (!membersRes.ok || !goalsRes.ok || !diaryRes.ok) {
+                if (!membersRes.ok || !goalsRes.ok || !diaryRes.ok || !scheduleRes.ok) {
                     throw new Error('データの読み込みに失敗しました');
                 }
 
-                const [members, goals, diary] = await Promise.all([
+                const [members, goals, diary, scheduleData] = await Promise.all([
                     membersRes.json(),
                     goalsRes.json(),
-                    diaryRes.json()
+                    diaryRes.json(),
+                    scheduleRes.json()
                 ]);
+
+                schedules = scheduleData;
 
                 renderMembers(members);
                 renderYearlyGoals(goals.yearlyGoals);
                 renderMonthlyGoals(goals.monthlyGoals);
                 renderAchievements(goals.achievements);
                 renderDiary(diary);
+                renderCalendar(currentYear, currentMonth);
 
             } catch (error) {
                 console.error(error);
@@ -334,6 +376,146 @@
             });
         }
 
+        function renderCalendar(year, month) {
+            const calendarDays = document.getElementById('calendar-days');
+            const calendarTitle = document.getElementById('calendar-title');
+            if (!calendarDays || !calendarTitle) return;
+
+            calendarDays.innerHTML = '';
+            calendarTitle.textContent = `${year}年${month + 1}月`;
+
+            // その月の最初の日と最後の日を取得
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            
+            // 前月の最後の日を取得
+            const prevLastDate = new Date(year, month, 0).getDate();
+
+            // 今日の日付文字列
+            const today = new Date();
+            const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            // 前月の日付を描画
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day other-month';
+                dayDiv.textContent = prevLastDate - i;
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // 当月の日付を描画
+            for (let i = 1; i <= lastDate; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                dayDiv.textContent = i;
+
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+                if (dateStr === todayDateStr) {
+                    dayDiv.classList.add('today');
+                }
+
+                // その日に予定があるか確認
+                const dayEvents = schedules.filter(event => event.date === dateStr);
+                if (dayEvents.length > 0) {
+                    dayDiv.classList.add('has-event');
+                    const dot = document.createElement('span');
+                    dot.className = 'event-dot';
+                    dayDiv.appendChild(dot);
+                }
+
+                dayDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-day').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    dayDiv.classList.add('selected');
+                    showEventDetail(dateStr, dayEvents);
+                });
+
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // 翌月の日付を描画
+            const totalCells = firstDayIndex + lastDate;
+            const nextDaysCount = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= nextDaysCount; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day other-month';
+                dayDiv.textContent = i;
+                calendarDays.appendChild(dayDiv);
+            }
+
+            // 初期化時は詳細エリアに案内文を表示
+            showEventDetail(null, []);
+        }
+
+        function prevMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        }
+
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentYear, currentMonth);
+        }
+
+        function showEventDetail(dateStr, events) {
+            const container = document.getElementById('event-detail-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!dateStr) {
+                container.innerHTML = '<p class="no-data">日付を選択すると、予定の詳細が表示されます。</p>';
+                return;
+            }
+
+            if (events.length === 0) {
+                const date = new Date(dateStr);
+                const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+                container.innerHTML = `
+                    <div class="event-card">
+                        <h4 style="margin-top: 0; margin-bottom: 8px;">${formattedDate}</h4>
+                        <p class="no-data" style="margin: 0;">この日の活動予定はありません。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            events.forEach(event => {
+                const date = new Date(event.date);
+                const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+                
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.innerHTML = `
+                    <div class="event-card-header">
+                        <h3 class="event-card-title">${escapeHTML(event.title)}</h3>
+                        <div class="event-card-meta">
+                            <span>${formattedDate}</span>
+                        </div>
+                    </div>
+                    <div class="event-card-detail-item">
+                        <strong>時間:</strong>
+                        <span>${escapeHTML(event.time || '-')}</span>
+                    </div>
+                    <div class="event-card-detail-item">
+                        <strong>場所:</strong>
+                        <span>${escapeHTML(event.location || '-')}</span>
+                    </div>
+                    ${event.description ? `<p class="event-card-description">${escapeHTML(event.description).replace(/\n/g, '<br>')}</p>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
         function formatDate(dateStr, dayOfWeek) {
             const date = new Date(dateStr);
             const year = date.getFullYear();
@@ -357,7 +539,7 @@
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '<li class="error">データの読み込みに失敗しました。</li>';
             });
-            const containers = ['past-goals-container', 'diary-list'];
+            const containers = ['past-goals-container', 'diary-list', 'event-detail-container'];
             containers.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '<p class="error">データの読み込みに失敗しました。</p>';
@@ -366,6 +548,11 @@
             const membersList = document.getElementById('members-list');
             if (membersList) {
                 membersList.innerHTML = '<tr><td colspan="3" class="error">データの読み込みに失敗しました。</td></tr>';
+            }
+
+            const calendarTitle = document.getElementById('calendar-title');
+            if (calendarTitle) {
+                calendarTitle.textContent = 'エラー';
             }
         }
     </script>
