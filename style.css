@@ -1,29 +1,44 @@
 /* ==========================================
    Base Style
    ========================================== */
+:root {
+    --bg: #f7f7f4;
+    --surface: #ffffff;
+    --surface-soft: #fafafa;
+    --text: #161616;
+    --text-muted: #666666;
+    --line: #e8e8e3;
+    --line-soft: #f1f1ed;
+    --accent: #2f6f4e;
+    --accent-soft: #edf6f1;
+    --shadow: 0 18px 45px rgba(17, 24, 39, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    background-color: #fcfcfc; /* 非常に薄いグレーでカードを引き立てる */
+    background-color: var(--bg);
     color: #333333;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
     line-height: 1.7;
     margin: 0;
-    padding: 40px 20px;
+    padding: 48px 20px;
     display: flex;
     justify-content: center;
     min-height: 100vh;
-    box-sizing: border-box;
 }
 
 /* 全体を囲むカード型コンテナ */
 .container {
     width: 100%;
-    max-width: 680px;
-    background-color: #ffffff;
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    padding: 40px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.02); /* 非常に繊細な影でリッチに */
-    box-sizing: border-box;
+    max-width: 760px;
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 44px;
+    box-shadow: var(--shadow);
 }
 
 /* ==========================================
@@ -31,20 +46,20 @@ body {
    ========================================== */
 header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
 }
 
 header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    color: #111111;
-    letter-spacing: -0.02em;
+    font-size: 2.15rem;
+    font-weight: 800;
+    margin: 0 0 10px 0;
+    color: var(--text);
+    letter-spacing: 0;
 }
 
 .subtitle {
     font-size: 0.95rem;
-    color: #666666;
+    color: var(--text-muted);
     margin: 0;
 }
 
@@ -53,32 +68,39 @@ header h1 {
    ========================================== */
 .tabs {
     display: flex;
-    border-bottom: 1px solid #eaeaea;
-    margin-bottom: 30px;
-    gap: 8px;
+    align-items: center;
+    background-color: #f5f5f1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 34px;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px;
 }
 
 .tab-button {
     background: none;
     border: none;
-    padding: 12px 16px;
+    border-radius: 6px;
+    padding: 10px 14px;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #888888;
+    color: var(--text-muted);
     cursor: pointer;
     position: relative;
-    transition: color 0.2s ease;
-    bottom: -1px; /* borderと重ねる */
-    border-bottom: 2px solid transparent;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
 }
 
 .tab-button:hover {
-    color: #111111;
+    background-color: rgba(255, 255, 255, 0.72);
+    color: var(--text);
 }
 
 .tab-button.active {
-    color: #111111;
-    border-bottom: 2px solid #111111; /* シンプルで力強いアクティブ線 */
+    background-color: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 5px rgba(17, 24, 39, 0.08);
 }
 
 /* ==========================================
@@ -108,7 +130,7 @@ header h1 {
    Typography & Sections
    ========================================== */
 section {
-    margin-bottom: 40px;
+    margin-bottom: 42px;
 }
 
 section:last-child {
@@ -117,11 +139,23 @@ section:last-child {
 
 h2 {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 800;
     margin-top: 0;
     margin-bottom: 20px;
-    color: #111111;
+    color: var(--text);
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+h2::before {
+    content: "";
+    width: 5px;
+    height: 1.15em;
+    background-color: var(--accent);
+    border-radius: 999px;
+    flex: 0 0 auto;
 }
 
 h3 {
@@ -143,24 +177,25 @@ ul {
 
 li {
     margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap; /* 小さいデバイスで改行できるように */
+    display: block;
+    padding-left: 18px;
+    position: relative;
 }
 
 li::before {
     content: "•";
-    color: #888888;
-    margin-right: 4px;
+    color: var(--accent);
+    left: 0;
+    position: absolute;
+    top: 0;
 }
 
 li strong {
-    color: #111111;
+    color: var(--text);
 }
 
 a {
-    color: #555555;
+    color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 3px;
     transition: color 0.2s ease, text-decoration-color 0.2s ease;
@@ -172,11 +207,61 @@ a:hover {
 }
 
 /* ==========================================
+   Daily Training
+   ========================================== */
+.daily-training-card {
+    background-color: var(--surface-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+    padding: 22px 24px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.daily-training-date {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.daily-training-title {
+    font-size: 1.25rem;
+    margin: 0 0 6px 0;
+    color: var(--text);
+}
+
+.daily-training-target {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0 0 14px 0;
+}
+
+.daily-training-menu {
+    margin: 0 0 14px 0;
+}
+
+.daily-training-menu li {
+    margin-bottom: 6px;
+}
+
+.daily-training-point {
+    background-color: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    color: #444444;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+    padding: 12px 14px;
+}
+
+/* ==========================================
    Modern Table
    ========================================== */
 .table-wrapper {
     overflow-x: auto;
-    border: 1px solid #eaeaea;
+    border: 1px solid var(--line);
     border-radius: 8px;
     margin: 20px 0;
 }
@@ -194,14 +279,14 @@ th, td {
 }
 
 th {
-    background-color: #fafafa;
+    background-color: var(--surface-soft);
     font-weight: 600;
-    color: #111111;
-    border-bottom: 1px solid #eaeaea;
+    color: var(--text);
+    border-bottom: 1px solid var(--line);
 }
 
 td {
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f5f5f2;
     color: #444444;
 }
 
@@ -226,9 +311,9 @@ td a {
 }
 
 .badge-achieved {
-    background-color: #f0f0f0;
-    color: #111111;
-    border: 1px solid #222222;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid #b9d8c6;
 }
 
 .badge-failed {
@@ -238,9 +323,9 @@ td a {
 }
 
 .badge-pending {
-    background-color: #111111;
+    background-color: var(--text);
     color: #ffffff;
-    border: 1px solid #111111;
+    border: 1px solid var(--text);
 }
 
 /* ==========================================
@@ -254,8 +339,8 @@ td a {
 }
 
 .past-month-section {
-    background-color: #fafafa;
-    border: 1px solid #f0f0f0;
+    background-color: var(--surface-soft);
+    border: 1px solid var(--line-soft);
     border-radius: 8px;
     padding: 16px 20px;
 }
@@ -287,8 +372,9 @@ td a {
 }
 
 .diary-post {
-    padding-bottom: 24px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 0 0 24px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    border-left: 2px solid #eeeeea;
 }
 
 .diary-post:last-child {
@@ -311,7 +397,7 @@ td a {
 
 .diary-post-header time {
     font-size: 0.8rem;
-    color: #888888;
+    color: var(--accent);
     font-weight: 500;
 }
 
@@ -356,7 +442,7 @@ td a {
 footer {
     margin-top: 48px;
     padding-top: 24px;
-    border-top: 1px solid #eaeaea;
+    border-top: 1px solid var(--line);
     text-align: center;
 }
 
@@ -370,11 +456,12 @@ footer p {
    Activity Schedule Calendar
    ========================================== */
 .calendar-container {
-    background-color: #ffffff;
-    border: 1px solid #eaeaea;
+    background-color: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.03);
 }
 
 .calendar-header {
@@ -391,8 +478,8 @@ footer p {
 }
 
 .calendar-btn {
-    background: none;
-    border: 1px solid #eaeaea;
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
     border-radius: 4px;
     width: 32px;
     height: 32px;
@@ -406,8 +493,9 @@ footer p {
 }
 
 .calendar-btn:hover {
-    background-color: #fafafa;
-    border-color: #111111;
+    background-color: var(--accent-soft);
+    border-color: #b9d8c6;
+    color: var(--accent);
 }
 
 .calendar-weekdays {
@@ -418,7 +506,7 @@ footer p {
     font-size: 0.8rem;
     color: #888888;
     margin-bottom: 8px;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--line-soft);
     padding-bottom: 8px;
 }
 
@@ -439,11 +527,12 @@ footer p {
     border-radius: 6px;
     cursor: pointer;
     position: relative;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .calendar-day:hover {
-    background-color: #f5f5f5;
+    background-color: var(--accent-soft);
+    color: var(--accent);
 }
 
 .calendar-day.other-month {
@@ -452,11 +541,11 @@ footer p {
 
 .calendar-day.today {
     font-weight: 700;
-    border: 1px solid #111111;
+    border: 1px solid var(--accent);
 }
 
 .calendar-day.selected {
-    background-color: #111111 !important;
+    background-color: var(--accent) !important;
     color: #ffffff !important;
     font-weight: 600;
 }
@@ -468,7 +557,7 @@ footer p {
 .event-dot {
     width: 5px;
     height: 5px;
-    background-color: #111111;
+    background-color: var(--accent);
     border-radius: 50%;
     position: absolute;
     bottom: 6px;
@@ -479,8 +568,8 @@ footer p {
 }
 
 .event-card {
-    background-color: #fafafa;
-    border: 1px solid #f0f0f0;
+    background-color: var(--surface-soft);
+    border: 1px solid var(--line-soft);
     border-radius: 8px;
     padding: 20px;
     animation: fadeIn 0.3s ease forwards;
@@ -491,7 +580,7 @@ footer p {
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: baseline;
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid var(--line);
     padding-bottom: 12px;
     margin-bottom: 12px;
     gap: 8px;
@@ -500,7 +589,7 @@ footer p {
 .event-card-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #111111;
+    color: var(--text);
     margin: 0;
 }
 
@@ -520,7 +609,7 @@ footer p {
 }
 
 .event-card-detail-item strong {
-    color: #111111;
+    color: var(--text);
     min-width: 45px;
 }
 
@@ -529,8 +618,49 @@ footer p {
     color: #444444;
     line-height: 1.6;
     margin-top: 12px;
-    border-top: 1px solid #f5f5f5;
+    border-top: 1px solid var(--line-soft);
     padding-top: 12px;
 }
 
+@media (max-width: 640px) {
+    body {
+        padding: 20px 12px;
+    }
 
+    .container {
+        padding: 26px 20px;
+    }
+
+    header {
+        text-align: left;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    .tabs {
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+
+    .tab-button {
+        font-size: 0.9rem;
+        padding: 9px 12px;
+    }
+
+    section {
+        margin-bottom: 34px;
+    }
+
+    .daily-training-card,
+    .calendar-container,
+    .event-card {
+        padding: 18px;
+    }
+
+    th,
+    td {
+        padding: 12px;
+    }
+}

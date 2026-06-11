@@ -27,6 +27,13 @@
             <!-- タブ1: 活動紹介 -->
             <div id="activity" class="tab-content active">
                 <section>
+                    <h2>今日のトレーニング</h2>
+                    <div id="daily-training-card" class="daily-training-card">
+                        <p class="loading">読み込み中...</p>
+                    </div>
+                </section>
+
+                <section>
                     <h2>活動内容</h2>
                     <ul>
                         <li><strong>活動日：</strong>水曜日, 金曜日 3限</li>
@@ -169,26 +176,29 @@
 
         async function loadData() {
             try {
-                const [membersRes, goalsRes, diaryRes, scheduleRes] = await Promise.all([
+                const [membersRes, goalsRes, diaryRes, scheduleRes, trainingsRes] = await Promise.all([
                     fetch('members.json'),
                     fetch('goals.json'),
                     fetch('diary.json'),
-                    fetch('schedule.json')
+                    fetch('schedule.json'),
+                    fetch('trainings.json')
                 ]);
 
-                if (!membersRes.ok || !goalsRes.ok || !diaryRes.ok || !scheduleRes.ok) {
+                if (!membersRes.ok || !goalsRes.ok || !diaryRes.ok || !scheduleRes.ok || !trainingsRes.ok) {
                     throw new Error('データの読み込みに失敗しました');
                 }
 
-                const [members, goals, diary, scheduleData] = await Promise.all([
+                const [members, goals, diary, scheduleData, trainings] = await Promise.all([
                     membersRes.json(),
                     goalsRes.json(),
                     diaryRes.json(),
-                    scheduleRes.json()
+                    scheduleRes.json(),
+                    trainingsRes.json()
                 ]);
 
                 schedules = scheduleData;
 
+                renderDailyTraining(trainings);
                 renderMembers(members);
                 renderYearlyGoals(goals.yearlyGoals);
                 renderMonthlyGoals(goals.monthlyGoals);
@@ -200,6 +210,50 @@
                 console.error(error);
                 showErrorMessages();
             }
+        }
+
+        function renderDailyTraining(trainings) {
+            const card = document.getElementById('daily-training-card');
+            if (!card) return;
+
+            card.innerHTML = '';
+            if (!trainings || trainings.length === 0) {
+                card.innerHTML = '<p class="no-data">登録されているトレーニングはありません。</p>';
+                return;
+            }
+
+            const todayKey = getTodayKey();
+            const training = trainings[pickDailyIndex(todayKey, trainings.length)];
+            const menuItems = Array.isArray(training.menu) ? training.menu : [];
+
+            const menuHTML = menuItems.length > 0
+                ? `<ul class="daily-training-menu">${menuItems.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul>`
+                : '';
+
+            card.innerHTML = `
+                <div class="daily-training-date">${formatDate(todayKey, getDayOfWeek(todayKey))}</div>
+                <h3 class="daily-training-title">${escapeHTML(training.name || 'トレーニング')}</h3>
+                ${training.target ? `<p class="daily-training-target">${escapeHTML(training.target)}</p>` : ''}
+                ${menuHTML}
+                ${training.point ? `<p class="daily-training-point"><strong>ポイント:</strong> ${escapeHTML(training.point)}</p>` : ''}
+            `;
+        }
+
+        function getTodayKey() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+
+        function pickDailyIndex(dateKey, length) {
+            let hash = 0;
+            for (let i = 0; i < dateKey.length; i++) {
+                hash = (hash * 31 + dateKey.charCodeAt(i)) >>> 0;
+            }
+            return hash % length;
+        }
+
+        function getDayOfWeek(dateStr) {
+            return ['日', '月', '火', '水', '木', '金', '土'][new Date(dateStr).getDay()];
         }
 
         function renderMembers(members) {
@@ -525,7 +579,7 @@
         }
 
         function escapeHTML(str) {
-            return str
+            return String(str ?? '')
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -544,6 +598,11 @@
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '<p class="error">データの読み込みに失敗しました。</p>';
             });
+
+            const dailyTrainingCard = document.getElementById('daily-training-card');
+            if (dailyTrainingCard) {
+                dailyTrainingCard.innerHTML = '<p class="error">データの読み込みに失敗しました。</p>';
+            }
 
             const membersList = document.getElementById('members-list');
             if (membersList) {
